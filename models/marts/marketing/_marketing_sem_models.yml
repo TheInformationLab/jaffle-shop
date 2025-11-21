@@ -1,37 +1,3 @@
-models:
-  - name: customers
-    description: Customer overview data mart, offering key details for each unique customer. One row per customer.
-    data_tests:
-      - dbt_utils.expression_is_true:
-          arguments:
-            expression: "lifetime_spend_pretax + lifetime_tax_paid = lifetime_spend"
-    columns:
-      - name: customer_id
-        description: The unique key of the orders mart.
-        data_tests:
-          - not_null
-          - unique
-      - name: customer_name
-        description: Customers' full name.
-      - name: count_lifetime_orders
-        description: Total number of orders a customer has ever placed.
-      - name: first_ordered_at
-        description: The timestamp when a customer placed their first order.
-      - name: last_ordered_at
-        description: The timestamp of a customer's most recent order.
-      - name: lifetime_spend_pretax
-        description: The sum of all the pre-tax subtotals of every order a customer has placed.
-      - name: lifetime_tax_paid
-        description: The sum of all the tax portion of every order a customer has placed.
-      - name: lifetime_spend
-        description: The sum of all the order totals (including tax) that a customer has ever placed.
-      - name: customer_type
-        description: Options are 'new' or 'returning', indicating if a customer has ordered more than once or has only placed their first order to date.
-        data_tests:
-          - accepted_values:
-              arguments:
-                values: ["new", "returning"]
-
 semantic_models:
   - name: customers
     defaults:
@@ -70,6 +36,32 @@ semantic_models:
       - name: lifetime_spend
         agg: sum
         description: Gross customer lifetime spend inclusive of taxes.
+
+  #The name of the semantic model.
+  - name: products
+    description: |
+      Product dimension table. The grain of the table is one row per product.
+    #The name of the dbt model and schema
+    model: ref('products')
+    #Entities. These usually corespond to keys in the table.
+    entities:
+      - name: product
+        type: primary
+        expr: product_id
+    #Dimensions. Either categorical or time. These add additonal context to metrics. The typical querying pattern is Metric by Dimension.
+    dimensions:
+      - name: product_name
+        type: categorical
+      - name: product_type
+        type: categorical
+      - name: product_description
+        type: categorical
+      - name: is_food_item
+        type: categorical
+      - name: is_drink_item
+        type: categorical
+      - name: product_price
+        type: categorical
 
 metrics:
   - name: lifetime_spend_pretax
