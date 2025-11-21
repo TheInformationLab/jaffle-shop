@@ -8,7 +8,7 @@ models:
           - not_null
           - unique
 
-  - name: stg_jaffle_shop__supplies
+  - name: supplies
     description: >
       List of our supply expenses data with basic cleaning and transformation applied.
 
