@@ -1,45 +1,3 @@
-models:
-  - name: order_items
-    columns:
-      - name: order_item_id
-        data_tests:
-          - not_null
-          - unique
-      - name: order_id
-        data_tests:
-          - relationships:
-              arguments:
-                to: ref('orders')
-                field: order_id
-unit_tests:
-  - name: test_supply_costs_sum_correctly
-    description: "Test that the counts of drinks and food orders convert to booleans properly."
-    model: order_items
-    given:
-      - input: ref('stg_supplies')
-        rows:
-          - {product_id: 1, supply_cost: 4.50}
-          - {product_id: 2, supply_cost: 3.50}
-          - {product_id: 2, supply_cost: 5.00}
-      - input: ref('stg_products')
-        rows:
-          - {product_id: 1}
-          - {product_id: 2}
-      - input: ref('stg_order_items')
-        rows:
-          - {order_id: 1, product_id: 1}
-          - {order_id: 2, product_id: 2}
-          - {order_id: 2, product_id: 2}
-      - input: ref('stg_orders')
-        rows:
-          - {order_id: 1}
-          - {order_id: 2}
-    expect:
-      rows:
-        - {order_id: 1, product_id: 1, supply_cost: 4.50}
-        - {order_id: 2, product_id: 2, supply_cost: 8.50}
-        - {order_id: 2, product_id: 2, supply_cost: 8.50}
-
 semantic_models:
   - name: order_item
     defaults:
@@ -84,6 +42,50 @@ semantic_models:
         description: The median revenue generated for each order item.
         agg: median
         expr: product_price
+
+  - name: orders
+    defaults:
+      agg_time_dimension: ordered_at
+    description: |
+      Order fact table. This table is at the order grain with one row per order.
+    model: ref('orders')
+    entities:
+      - name: order_id
+        type: primary
+      - name: location
+        type: foreign
+        expr: location_id
+      - name: customer
+        type: foreign
+        expr: customer_id
+    dimensions:
+      - name: ordered_at
+        expr: ordered_at
+        type: time
+        type_params:
+          time_granularity: day
+      - name: order_total_dim
+        type: categorical
+        expr: order_total
+      - name: is_food_order
+        type: categorical
+      - name: is_drink_order
+        type: categorical
+      - name: customer_order_number
+        type: categorical
+    measures:
+      - name: order_total
+        description: The total amount for each order including taxes.
+        agg: sum
+      - name: order_count
+        expr: 1
+        agg: sum
+      - name: tax_paid
+        description: The total tax paid on each order.
+        agg: sum
+      - name: order_cost
+        description: The cost for each order item. Cost is calculated as a sum of the supply cost for each order item.
+        agg: sum
 
 metrics:
   # Simple metrics
@@ -166,6 +168,51 @@ metrics:
     type_params:
       measure: revenue
 
+  - name: order_total
+    description: Sum of total order amonunt. Includes tax + revenue.
+    type: simple
+    label: Order Total
+    type_params:
+      measure: order_total
+  - name: new_customer_orders
+    description: New customer's first order count
+    label: New Customers
+    type: simple
+    type_params:
+      measure: order_count
+    filter: |
+      {{ Dimension('order_id__customer_order_number') }} = 1
+  - name: large_orders
+    description: "Count of orders with order total over 20."
+    type: simple
+    label: Large Orders
+    type_params:
+      measure: order_count
+    filter: |
+      {{ Dimension('order_id__order_total_dim') }} >= 20
+  - name: orders
+    description: Count of orders.
+    label: Orders
+    type: simple
+    type_params:
+      measure: order_count
+  - name: food_orders
+    description: Count of orders that contain food order items
+    label: Food Orders
+    type: simple
+    type_params:
+      measure: order_count
+    filter: |
+      {{ Dimension('order_id__is_food_order') }} = true
+  - name: drink_orders
+    description: Count of orders that contain drink order items
+    label: Drink Orders
+    type: simple
+    type_params:
+      measure: order_count
+    filter: |
+      {{ Dimension('order_id__is_drink_order') }} = true
+
 saved_queries:
   - name: revenue_metrics
     query_params:
@@ -177,5 +224,20 @@ saved_queries:
         - TimeDimension('metric_time', 'day')
     exports:
       - name: revenue_metrics
+        config:
+          export_as: table
+
+  - name: order_metrics
+    query_params:
+      metrics:
+        - orders
+        - new_customer_orders
+        - order_total
+        - food_orders
+        - drink_orders
+      group_by:
+        - TimeDimension('metric_time', 'day')
+    exports:
+      - name: order_metrics
         config:
           export_as: table
