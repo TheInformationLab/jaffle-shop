@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: ecom
     schema: raw
-    database: dbt_exemplar
+    database: jaffle_shop
     description: E-commerce data for the Jaffle Shop
     tables:
       - name: raw_customers
