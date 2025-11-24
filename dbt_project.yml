@@ -26,6 +26,7 @@ seeds:
 
 models:
   jaffle_shop:
+    +database: dbt_exemplar
     staging:
       +materialized: view
     marts:
