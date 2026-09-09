@@ -6,7 +6,7 @@ default: # Profile name (matches dbt_project.yml)
       account: "{{ env_var('DB_ACCOUNT') }}" # Snowflake <account_name>
       user: "{{ env_var('DB_USER') }}" #have to use email
       role: "{{ env_var('DB_ROLE') }}"
-      private_key: "{{ env_var('DB_KEYPAIR') }}" # Path to your private key file
+      private_key_path: "{{ env_var('DB_KEYPAIR_PATH') }}" # Path to your private key file
       private_key_passphrase: "{{ env_var('DB_KEYPAIR_PASSPHRASE')}}"
       database: "{{ env_var('DB_DATABASE') }}" # Snowflake database name
       warehouse: "{{ env_var('DB_WAREHOUSE') }}" # Snowflake warehouse name
