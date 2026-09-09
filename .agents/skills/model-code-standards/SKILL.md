@@ -9,6 +9,11 @@ metadata:
 
 Check dbt model SQL against this team's style guide and flag every violation before calling a model finished. This is a manual/heuristic review — it does not replace `sqlfluff` or `dbt_project_evaluator` for CI enforcement; use this skill for in-conversation review and edits.
 
+## Additional Resources
+
+- [Anti-patterns](references/anti-patterns.md) — extended catalog of issues beyond the 9 numbered rules (null-dropping filters, fanout-masking DISTINCT, non-deterministic windows, incremental models missing a filter, and more). Check this during every review; report hits as a separate "Additional findings" section, not folded into the numbered rule table.
+- [Accepted exceptions](references/exceptions.md) — log of models where a rule is knowingly not followed, and why. Check before flagging a violation. Only add a new entry when the user explicitly confirms the exception and asks you to record it.
+
 ## When to use
 
 - The user pastes or references a `.sql` model and asks for a review, lint, cleanup, or refactor.
@@ -23,7 +28,8 @@ Do not apply this skill to raw analytical/ad-hoc SQL that isn't a dbt model (e.g
 2. Walk the checklist below top to bottom. For each rule, note every violation with a line reference — don't stop at the first hit per rule.
 3. Report findings as a table: `Rule | Location | Current | Suggested fix`.
 4. If asked to fix rather than just review, apply minimal-diff edits — preserve the model's logic and existing structure; don't restructure things the checklist doesn't cover (e.g. don't reorder CTEs, rename unrelated columns, or change materialization) unless asked.
-5. If a rule genuinely can't be satisfied (e.g. a join truly has no other option than `USING`), say so explicitly rather than silently skipping it — flag it as an accepted exception, not a pass.
+5. Check [Accepted exceptions](references/exceptions.md) for the model before flagging violations. If a rule genuinely can't be satisfied and isn't already logged there, say so explicitly rather than silently skipping it — surface it as a candidate exception, not a pass, and only add it to the log if the user confirms.
+6. Also check the model against [Anti-patterns](references/anti-patterns.md) and report any hits as a separate "Additional findings" section.
 
 ## Checklist
 
