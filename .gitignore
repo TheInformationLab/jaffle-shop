@@ -2,14 +2,12 @@
 venv
 .env
 env
-
+.vscode
 target/
 dbt_packages/
 logs/
-profiles.yml
-
 .DS_Store
-
+.python-version
 .user.yml
 
 .ruff_cache
